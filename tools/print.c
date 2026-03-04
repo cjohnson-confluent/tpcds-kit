@@ -55,7 +55,7 @@
 static FILE *fpOutfile = NULL;
 static FILE *fpDeleteFile;
 static char *arDeleteFiles[3] = {"", "delete_", "inventory_delete_"};
-extern int g_filter_tabid;
+int g_filter_tabid = -1; /* table routed to stdout when FILTER is set; -1 = none */
 
 static int current_table = -1;
 

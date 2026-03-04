@@ -76,7 +76,7 @@ extern char *optarg;
 char g_szCommandLine[201];
 file_ref_t CurrentFile;
 file_ref_t *pCurrentFile;
-int g_filter_tabid = -1; /* table routed to stdout when FILTER is set; -1 = none */
+extern int g_filter_tabid; /* defined in print.c, linked into both dsdgen and dsqgen */
 
 
 /*
