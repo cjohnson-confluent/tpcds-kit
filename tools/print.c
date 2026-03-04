@@ -55,6 +55,7 @@
 static FILE *fpOutfile = NULL;
 static FILE *fpDeleteFile;
 static char *arDeleteFiles[3] = {"", "delete_", "inventory_delete_"};
+extern int g_filter_tabid;
 
 static int current_table = -1;
 
@@ -446,7 +447,29 @@ print_start (int tbl)
    current_table = tbl;
 
    if (is_set ("FILTER"))
-	   fpOutfile = stdout;
+   {
+	   if (tbl == g_filter_tabid)
+	   {
+		   /* this is the table the user asked for: stream it to stdout */
+		   fpOutfile = stdout;
+	   }
+	   else
+	   {
+		   /*
+		    * A parent table being run to generate a child: suppress its output.
+		    * Open /dev/null once and cache it so we don't reopen every row.
+		    */
+		   if (pTdef->outfile == NULL)
+		   {
+#ifdef WIN32
+			   pTdef->outfile = fopen("nul", "w");
+#else
+			   pTdef->outfile = fopen("/dev/null", "w");
+#endif
+		   }
+		   fpOutfile = pTdef->outfile;
+	   }
+   }
    else
    {
 	   if (pTdef->outfile == NULL)
@@ -454,9 +477,9 @@ print_start (int tbl)
 		   if (is_set("PARALLEL"))
 			   sprintf (path, "%s%c%s_%d_%d%s",
 			   get_str ("DIR"),
-			   PATH_SEP, getTableNameByID (tbl), 
+			   PATH_SEP, getTableNameByID (tbl),
 			   get_int("CHILD"), get_int("PARALLEL"), (is_set("VALIDATE"))?get_str ("VSUFFIX"):get_str ("SUFFIX"));
-		   else 
+		   else
 		   {
 			   if (is_set("UPDATE"))
 				   sprintf (path, "%s%c%s_%d%s",
@@ -480,9 +503,9 @@ print_start (int tbl)
 		   pTdef->outfile = fopen (path, "w");
 #endif
 	   }
+	   fpOutfile = pTdef->outfile;
    }
-   
-   fpOutfile = pTdef->outfile;
+
    res = (fpOutfile != NULL);
 
    if (!res)                    /* open failed! */

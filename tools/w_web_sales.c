@@ -53,6 +53,8 @@
 #include "permute.h"
 #include "scd.h"
 #include "parallel.h"
+#include "r_params.h"
+extern int g_filter_tabid;
 
 struct W_WEB_SALES_TBL g_w_web_sales;
 ds_key_t skipDays(int nTable, ds_key_t *pRemainder);
@@ -186,15 +188,18 @@ mk_detail (void *row, int bPrint)
       r->ws_promo_sk = mk_join (WS_PROMO_SK, PROMOTION, 1);
       set_pricing(WS_PRICING, &r->ws_pricing);
 
-      /** 
+      /**
       * having gone to the trouble to make the sale, now let's see if it gets returned
       */
-      genrand_integer(&nTemp, DIST_UNIFORM, 0, 99, 0, WR_IS_RETURNED);
-      if (nTemp < WR_RETURN_PCT)
+      if (!is_set("FILTER") || g_filter_tabid == WEB_RETURNS)
       {
-         mk_w_web_returns(&w_web_returns, 1);
-         if (bPrint)
-			 pr_w_web_returns(&w_web_returns);
+         genrand_integer(&nTemp, DIST_UNIFORM, 0, 99, 0, WR_IS_RETURNED);
+         if (nTemp < WR_RETURN_PCT)
+         {
+            mk_w_web_returns(&w_web_returns, 1);
+            if (bPrint)
+               pr_w_web_returns(&w_web_returns);
+         }
       }
 
       /**

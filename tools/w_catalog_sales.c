@@ -52,6 +52,7 @@
 #include "permute.h"
 #include "params.h"
 #include "parallel.h"
+extern int g_filter_tabid;
 #include "scd.h"
 
 struct W_CATALOG_SALES_TBL g_w_catalog_sales;
@@ -214,15 +215,18 @@ mk_detail(void *row, int bPrint)
 	r->cs_promo_sk = mk_join (CS_PROMO_SK, PROMOTION, 1);
 	set_pricing(CS_PRICING, &r->cs_pricing);
 
-	/** 
+	/**
 	* having gone to the trouble to make the sale, now let's see if it gets returned
 	*/
-	genrand_integer(&nTemp, DIST_UNIFORM, 0, 99, 0, CR_IS_RETURNED);
-	if (nTemp < CR_RETURN_PCT)
+	if (!is_set("FILTER") || g_filter_tabid == CATALOG_RETURNS)
 	{
-		mk_w_catalog_returns(NULL, 1);
-      if (bPrint)
-         pr_w_catalog_returns(NULL);
+		genrand_integer(&nTemp, DIST_UNIFORM, 0, 99, 0, CR_IS_RETURNED);
+		if (nTemp < CR_RETURN_PCT)
+		{
+			mk_w_catalog_returns(NULL, 1);
+			if (bPrint)
+				pr_w_catalog_returns(NULL);
+		}
 	}
 
    /**

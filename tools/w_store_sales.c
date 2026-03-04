@@ -50,6 +50,8 @@
 #include "permute.h"
 #include "scd.h"
 #include "parallel.h"
+#include "r_params.h"
+extern int g_filter_tabid;
 #ifdef JMS
 extern rng_t Streams[];
 #endif
@@ -135,15 +137,18 @@ tdef *pT = getSimpleTdefsByNumber(STORE_SALES);
 	r->ss_sold_promo_sk = mk_join (SS_SOLD_PROMO_SK, PROMOTION, 1);
 	set_pricing(SS_PRICING, &r->ss_pricing);
 
-	/** 
+	/**
 	* having gone to the trouble to make the sale, now let's see if it gets returned
 	*/
-	genrand_integer(&nTemp, DIST_UNIFORM, 0, 99, 0, SR_IS_RETURNED);
-	if (nTemp < SR_RETURN_PCT)
+	if (!is_set("FILTER") || g_filter_tabid == STORE_RETURNS)
 	{
-		mk_w_store_returns(&ReturnRow, 1);
-      if (bPrint)
-         pr_w_store_returns(&ReturnRow);
+		genrand_integer(&nTemp, DIST_UNIFORM, 0, 99, 0, SR_IS_RETURNED);
+		if (nTemp < SR_RETURN_PCT)
+		{
+			mk_w_store_returns(&ReturnRow, 1);
+			if (bPrint)
+				pr_w_store_returns(&ReturnRow);
+		}
 	}
 
    if (bPrint)

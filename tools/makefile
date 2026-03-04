@@ -36,10 +36,15 @@
 #
 #
 ################
-## TARGET OS HERE
+## TARGET OS - auto-detected from uname, override by setting OS= on the command line
 ################
 # OS Values: AIX, LINUX, SOLARIS, NCR, HPUX, MACOS
-OS = LINUX
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    OS = MACOS
+else
+    OS = LINUX
+endif
 ###########
 # No changes should be necessary below this point
 # Each compile variable is adjusted for the target platform using the OS setting above
@@ -56,9 +61,9 @@ CC		= $($(OS)_CC)
 # CFLAGS
 AIX_CFLAGS		= -q64 -O3 -D_LARGE_FILES
 HPUX_CFLAGS		= -O3 -Wall
-LINUX_CFLAGS	= -g -Wall
+LINUX_CFLAGS	= -g -Wall -Wno-implicit-int -Wno-deprecated-non-prototype -fcommon
 NCR_CFLAGS		= -g 
-MACOS_CFLAGS		= -g -Wall
+MACOS_CFLAGS		= -g -Wall -Wno-implicit-int -Wno-deprecated-non-prototype
 SOLARIS_CFLAGS	= -O3 -Wall
 SOL86_CFLAGS	= -O3 
 BASE_CFLAGS    	= -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DYYDEBUG #-maix64 -DMEM_TEST 

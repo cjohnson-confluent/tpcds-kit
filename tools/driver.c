@@ -76,6 +76,7 @@ extern char *optarg;
 char g_szCommandLine[201];
 file_ref_t CurrentFile;
 file_ref_t *pCurrentFile;
+int g_filter_tabid = -1; /* table routed to stdout when FILTER is set; -1 = none */
 
 
 /*
@@ -358,6 +359,9 @@ validate_options(void)
 		if (get_int("CHILD") < 1) strcat(msg, "CHILD must be >= 1\n");
 	}
 
+	if (is_set("FILTER") && !strcmp(get_str("TABLE"), "ALL"))
+		strcat(msg, "FILTER requires a specific table name (use -table <name>)\n");
+
 	if (strlen(msg)) usage(NULL, msg);
 
 	return;
@@ -468,6 +472,33 @@ main (int ac, char **av)
 	else if (is_set("ABREVIATION"))
 	{
 		tabid = find_table("ABREVIATION", get_str("ABREVIATION"));
+	}
+
+	/*
+	 * When filtering for a child (returns) table, run its parent generator
+	 * but route only the child table's output to stdout. Save the original
+	 * child tabid so print_start knows which table goes to stdout, then
+	 * redirect tabid to the parent so the generation loop runs the right builder.
+	 */
+	g_filter_tabid = tabid;
+	if (is_set("FILTER") && tabid != -1)
+	{
+		pT = getSimpleTdefsByNumber(tabid);
+		if (pT && (pT->flags & FL_CHILD))
+		{
+			int parent_tabid;
+			tdef *pParent;
+			for (parent_tabid = CALL_CENTER;
+				 (pParent = getSimpleTdefsByNumber(parent_tabid)) && pParent->name;
+				 parent_tabid++)
+			{
+				if ((pParent->flags & FL_PARENT) && pParent->nParam == tabid)
+				{
+					tabid = parent_tabid;
+					break;
+				}
+			}
+		}
 	}
 
 	for (i=(is_set("UPDATE"))?S_BRAND:CALL_CENTER; (pT = getSimpleTdefsByNumber(i)); i++)
